@@ -1,0 +1,139 @@
+version: "3.6"
+services:
+    db:
+        image: "postgres:16"
+        ports:
+            - "5432:5432"
+        environment:
+            POSTGRES_USER: "postgres"
+            POSTGRES_PASSWORD: "postgres123!@#"
+            POSTGRES_DB: "ClassifiedAds"
+    rabbitmq:
+        image: "rabbitmq:3-management"
+        ports:
+          - "5672:5672"
+          - "15672:15672"
+    mailhog:
+        image: mailhog/mailhog
+        ports: 
+          - 1025:1025 # smtp server
+          - 8025:8025 # web ui
+    kafka:
+        image: confluentinc/cp-kafka:latest
+        ports:
+          - 9092:9092
+        environment:
+          KAFKA_NODE_ID: 1
+          KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+          KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092'
+          KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+          KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+          KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+          KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+          KAFKA_JMX_PORT: 9101
+          KAFKA_JMX_HOSTNAME: localhost
+          KAFKA_PROCESS_ROLES: 'broker,controller'
+          KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:29093'
+          KAFKA_LISTENERS: 'PLAINTEXT://kafka:29092,CONTROLLER://kafka:29093,PLAINTEXT_HOST://0.0.0.0:9092'
+          KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+          KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+          CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+    migrator:
+        image: classifiedads.migrator
+        build:
+          context: .
+          dockerfile: ./ClassifiedAds.Migrator/Dockerfile
+        depends_on:
+          - db
+        environment:
+          DOTNET_ENVIRONMENT: ${DOTNET_ENVIRONMENT}
+          ConnectionStrings__ClassifiedAds: ${ConnectionStrings__ClassifiedAds}
+          CheckDependency__Enabled: "true"
+          CheckDependency__Host: "db:5432"
+    identityserver:
+        image: classifiedads.identityserver
+        build:
+          context: ../IdentityServers/OpenIddict
+          dockerfile: ./ClassifiedAds.IdentityServer/Dockerfile
+        ports:
+            - "9000:80"
+        depends_on:
+          - db
+          - migrator
+        environment:
+          ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+          ConnectionStrings__ClassifiedAds: ${ConnectionStrings__ClassifiedAds}
+          ConnectionStrings__IdentityServer: ${ConnectionStrings__IdentityServer_OpenIddict}
+          CookiePolicyOptions__IsEnabled: "true"
+          CookiePolicyOptions__MinimumSameSitePolicy: "Lax"
+          CookiePolicyOptions__Secure: "None"
+    webapi:
+        image: classifiedads.webapi
+        build:
+          context: .
+          dockerfile: ./ClassifiedAds.WebAPI/Dockerfile
+        ports:
+            - "9002:8080"
+        depends_on:
+          - db
+          - migrator
+        environment:
+          ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+          ConnectionStrings__ClassifiedAds: ${ConnectionStrings__ClassifiedAds}
+          Authentication__IdentityServer__Authority: "http://host.docker.internal:9000"
+          Authentication__IdentityServer__RequireHttpsMetadata: "false"
+          Storage__Provider: ${Storage__Provider}
+          Storage__Local__Path: ${Storage__Local__Path}
+          Storage__Azure__ConnectionString: ${Storage__Azure__ConnectionString}
+          Storage__Azure__Container: ${Storage__Azure__Container}
+          Storage__Amazon__AccessKeyID: ${Storage__Amazon__AccessKeyID}
+          Storage__Amazon__SecretAccessKey: ${Storage__Amazon__SecretAccessKey}
+          Storage__Amazon__BucketName: ${Storage__Amazon__BucketName}
+          Storage__Amazon__RegionEndpoint: ${Storage__Amazon__RegionEndpoint}
+    blazor:
+        image: classifiedads.blazor
+        build:
+          context: .
+          dockerfile: ./ClassifiedAds.BlazorServerSide/Dockerfile
+        ports:
+            - "9008:8080"
+        depends_on:
+          - identityserver
+          - webapi
+        environment:
+          ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+          OpenIdConnect__Authority: "http://host.docker.internal:9000"
+          OpenIdConnect__RequireHttpsMetadata: "false"
+          ResourceServer__Endpoint: ${ResourceServer__Endpoint}
+          ResourceServer__PublicEndpoint: ${ResourceServer__PublicEndpoint}
+          CookiePolicyOptions__IsEnabled: "true"
+          CookiePolicyOptions__MinimumSameSitePolicy: "Lax"
+          CookiePolicyOptions__Secure: "None" 
+    background:
+        image: classifiedads.background
+        build:
+          context: .
+          dockerfile: ./ClassifiedAds.Background/Dockerfile
+        depends_on:
+          - db
+          - migrator
+          - rabbitmq
+          - mailhog
+        environment:
+          DOTNET_ENVIRONMENT: ${DOTNET_ENVIRONMENT}
+          ConnectionStrings__ClassifiedAds: ${ConnectionStrings__ClassifiedAds}
+          CheckDependency__Enabled: "true"
+          CheckDependency__Host: "rabbitmq:5672"
+          Messaging__Provider: ${Messaging__Provider}
+          Messaging__RabbitMQ__HostName: ${Messaging__RabbitMQ__HostName}
+          Messaging__Kafka__BootstrapServers: ${Messaging__Kafka__BootstrapServers}
+          Messaging__AzureQueue__ConnectionString: ${Messaging__AzureQueue__ConnectionString}
+          Notification__Email__Provider: "SmtpClient"
+          Notification__Email__SmtpClient__Host: "mailhog"
+          Notification__Email__SmtpClient__Port: "1025"
+          Notification__Sms__Provider: "Fake"
+          Notification__Sms__Twilio__AccountSId: ""
+          Notification__Sms__Twilio__AuthToken: ""
+          Notification__Sms__Twilio__FromNumber: ""
+          Notification__Web__Provider: "Fake"
+          Notification__Web__SignalR__Endpoint: "http://blazor"

@@ -1,0 +1,26 @@
+<Solution>
+  <Folder Name="/Core/">
+    <Project Path="ClassifiedAds.Application/ClassifiedAds.Application.csproj" />
+    <Project Path="ClassifiedAds.Domain/ClassifiedAds.Domain.csproj" />
+  </Folder>
+  <Folder Name="/CrossCuttingConcerns/">
+    <Project Path="ClassifiedAds.CrossCuttingConcerns/ClassifiedAds.CrossCuttingConcerns.csproj" />
+  </Folder>
+  <Folder Name="/Infrastructure/">
+    <Project Path="ClassifiedAds.Infrastructure/ClassifiedAds.Infrastructure.csproj" />
+    <Project Path="ClassifiedAds.Persistence/ClassifiedAds.Persistence.csproj" />
+  </Folder>
+  <Folder Name="/Presentations/">
+    <Project Path="ClassifiedAds.AspireAppHost/ClassifiedAds.AspireAppHost.csproj" />
+  </Folder>
+  <Folder Name="/Presentations/BackEnds/">
+    <Project Path="ClassifiedAds.Background/ClassifiedAds.Background.csproj" />
+    <Project Path="ClassifiedAds.Migrator/ClassifiedAds.Migrator.csproj" />
+    <Project Path="ClassifiedAds.WebAPI/ClassifiedAds.WebAPI.csproj" />
+  </Folder>
+  <Folder Name="/Presentations/UIs/">
+    <Project Path="ClassifiedAds.Blazor.Modules/ClassifiedAds.Blazor.Modules.csproj" />
+    <Project Path="ClassifiedAds.BlazorServerSide/ClassifiedAds.BlazorServerSide.csproj" />
+    <Project Path="ClassifiedAds.BlazorWebAssembly/ClassifiedAds.BlazorWebAssembly.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,12 @@
+﻿https://docs.microsoft.com/en-us/ef/core/cli/powershell
+
+Add-Migration -Context AdsDbContext Init -OutputDir Migrations/AdsDb
+
+Remove-Migration -Context AdsDbContext
+Remove-Migration -Context AdsDbContext -Force
+
+Update-Database -Context AdsDbContext
+
+Script-DbContext -Context AdsDbContext
+
+Script-Migration -Context AdsDbContext
