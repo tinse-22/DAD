@@ -31,8 +31,9 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
-using Swashbuckle.AspNetCore.SwaggerUI;
+using Scalar.AspNetCore;
 using System;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Reflection;
 
@@ -144,71 +145,61 @@ services.AddRateLimiter(options =>
     options.AddPolicy<string, GetAuditLogsRateLimiterPolicy>(RateLimiterPolicyNames.GetAuditLogsPolicy);
 });
 
-services.AddSwaggerGen(setupAction =>
+services.AddOpenApi("ClassifiedAds", options =>
 {
-    setupAction.SwaggerDoc(
-        $"ClassifiedAds",
-        new OpenApiInfo()
-        {
-            Title = "ClassifiedAds API",
-            Version = "1",
-            Description = "ClassifiedAds API Specification.",
-            Contact = new OpenApiContact
-            {
-                Email = "abc.xyz@gmail.com",
-                Name = "Phong Nguyen",
-                Url = new Uri("https://github.com/phongnguyend"),
-            },
-            License = new OpenApiLicense
-            {
-                Name = "MIT License",
-                Url = new Uri("https://opensource.org/licenses/MIT"),
-            },
-        });
-
-    setupAction.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+    options.AddDocumentTransformer((document, context, cancellationToken) =>
     {
-        Type = SecuritySchemeType.Http,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
-        Description = "Input your Bearer token to access this API",
-    });
-
-    setupAction.AddSecurityDefinition("Oidc", new OpenApiSecurityScheme
-    {
-        Type = SecuritySchemeType.OAuth2,
-        Flows = new OpenApiOAuthFlows
+        document.Info.Title = "ClassifiedAds API";
+        document.Info.Version = "1";
+        document.Info.Description = "ClassifiedAds API Specification.";
+        document.Info.Contact = new OpenApiContact
         {
-            AuthorizationCode = new OpenApiOAuthFlow
+            Email = "abc.xyz@gmail.com",
+            Name = "Phong Nguyen",
+            Url = new Uri("https://github.com/phongnguyend"),
+        };
+        document.Info.License = new OpenApiLicense
+        {
+            Name = "MIT License",
+            Url = new Uri("https://opensource.org/licenses/MIT"),
+        };
+
+        document.Components ??= new OpenApiComponents();
+        document.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
+        {
+            Type = SecuritySchemeType.Http,
+            Scheme = "Bearer",
+            BearerFormat = "JWT",
+            Description = "Input your Bearer token to access this API",
+        };
+        document.Components.SecuritySchemes["OAuth2"] = new OpenApiSecurityScheme
+        {
+            Type = SecuritySchemeType.OAuth2,
+            Flows = new OpenApiOAuthFlows
             {
-                TokenUrl = new Uri(appSettings.Authentication.IdentityServer.Authority + "/connect/token", UriKind.Absolute),
-                AuthorizationUrl = new Uri(appSettings.Authentication.IdentityServer.Authority + "/connect/authorize", UriKind.Absolute),
-                Scopes = new Dictionary<string, string>
+                AuthorizationCode = new OpenApiOAuthFlow
                 {
-                            { "openid", "OpenId" },
-                            { "profile", "Profile" },
-                            { "ClassifiedAds.WebAPI", "ClassifiedAds WebAPI" },
+                    TokenUrl = new Uri(appSettings.Authentication.IdentityServer.Authority + "/connect/token", UriKind.Absolute),
+                    AuthorizationUrl = new Uri(appSettings.Authentication.IdentityServer.Authority + "/connect/authorize", UriKind.Absolute),
+                    Scopes = new Dictionary<string, string>
+                    {
+                        { "openid", "OpenId" },
+                        { "profile", "Profile" },
+                        { "ClassifiedAds.WebAPI", "ClassifiedAds WebAPI" },
+                    },
+                },
+                ClientCredentials = new OpenApiOAuthFlow
+                {
+                    TokenUrl = new Uri(appSettings.Authentication.IdentityServer.Authority + "/connect/token", UriKind.Absolute),
+                    Scopes = new Dictionary<string, string>
+                    {
+                        { "ClassifiedAds.WebAPI", "ClassifiedAds WebAPI" },
+                    },
                 },
             },
-            ClientCredentials = new OpenApiOAuthFlow
-            {
-                TokenUrl = new Uri(appSettings.Authentication.IdentityServer.Authority + "/connect/token", UriKind.Absolute),
-                Scopes = new Dictionary<string, string>
-                {
-                            { "ClassifiedAds.WebAPI", "ClassifiedAds WebAPI" },
-                },
-            },
-        },
-    });
+        };
 
-    setupAction.AddSecurityRequirement(doc => new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecuritySchemeReference("Oidc", doc), new List<string>()
-        },
-        {
-            new OpenApiSecuritySchemeReference("Bearer", doc), new List<string>()
-        },
+        return Task.CompletedTask;
     });
 });
 
@@ -262,25 +253,20 @@ app.UseCors(appSettings.CORS.AllowAnyOrigin ? "AllowAnyOrigin" : "AllowedOrigins
 
 app.UseSecurityHeaders(appSettings.SecurityHeaders);
 
-app.UseSwagger();
+app.MapOpenApi();
 
-app.UseSwaggerUI(setupAction =>
+app.MapScalarApiReference(options =>
 {
-    setupAction.OAuthClientId("Swagger");
-    setupAction.OAuthClientSecret("secret");
-    setupAction.OAuthUsePkce();
-
-    setupAction.SwaggerEndpoint(
-        "/swagger/ClassifiedAds/swagger.json",
-        "ClassifiedAds API");
-
-    setupAction.RoutePrefix = string.Empty;
-
-    setupAction.DefaultModelExpandDepth(2);
-    setupAction.DefaultModelRendering(ModelRendering.Model);
-    setupAction.DocExpansion(DocExpansion.None);
-    setupAction.EnableDeepLinking();
-    setupAction.DisplayOperationId();
+    options
+        .WithTitle("ClassifiedAds API")
+        .WithTheme(ScalarTheme.BluePlanet)
+        .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient)
+        .WithPreferredScheme("Bearer")
+        .WithOAuth2Authentication(oauth =>
+        {
+            oauth.ClientId = "Scalar";
+            oauth.Scopes = ["openid", "profile", "ClassifiedAds.WebAPI"];
+        });
 });
 
 app.UseAuthentication();

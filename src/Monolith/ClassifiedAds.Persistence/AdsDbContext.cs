@@ -3,10 +3,10 @@ using ClassifiedAds.Domain.Repositories;
 using ClassifiedAds.Persistence.Interceptors;
 using ClassifiedAds.Persistence.Locks;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
+using Npgsql;
 using System;
 using System.Data;
 using System.Linq;
@@ -41,8 +41,8 @@ public class AdsDbContext : DbContext, IUnitOfWork, IDataProtectionKeyContext
     {
         _dbContextTransaction = await Database.BeginTransactionAsync(isolationLevel, cancellationToken);
 
-        var sqlLock = new SqlDistributedLock(_dbContextTransaction.GetDbTransaction() as SqlTransaction);
-        var lockScope = sqlLock.Acquire(lockName);
+        var postgresLock = new PostgresDistributedLock(_dbContextTransaction.GetDbTransaction() as NpgsqlTransaction);
+        var lockScope = postgresLock.Acquire(lockName);
         if (lockScope == null)
         {
             throw new Exception($"Could not acquire lock: {lockName}");
