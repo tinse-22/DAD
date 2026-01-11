@@ -2,5 +2,5 @@
 
 public class LocalizationProviders
 {
-    public SqlServerOptions SqlServer { get; set; }
+    public PostgreSqlLocalizationOptions PostgreSql { get; set; }
 }

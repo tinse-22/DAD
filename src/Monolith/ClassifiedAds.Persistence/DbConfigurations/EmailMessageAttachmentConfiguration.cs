@@ -1,4 +1,4 @@
-﻿using ClassifiedAds.Domain.Entities;
+using ClassifiedAds.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
@@ -10,6 +10,6 @@ public class EmailMessageAttachmentConfiguration : IEntityTypeConfiguration<Emai
     public void Configure(EntityTypeBuilder<EmailMessageAttachment> builder)
     {
         builder.ToTable("EmailMessageAttachments");
-        builder.Property(x => x.Id).HasDefaultValueSql("newsequentialid()");
+        builder.Property(x => x.Id).HasDefaultValueSql("gen_random_uuid()");
     }
 }

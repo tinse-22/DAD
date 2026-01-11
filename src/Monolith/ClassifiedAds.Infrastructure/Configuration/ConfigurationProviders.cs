@@ -2,7 +2,7 @@
 
 public class ConfigurationProviders
 {
-    public SqlServerOptions SqlServer { get; set; }
+    public PostgreSqlConfigurationOptions PostgreSql { get; set; }
 
     public AzureAppConfigurationOptions AzureAppConfiguration { get; set; }
 

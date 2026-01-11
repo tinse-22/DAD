@@ -1,4 +1,4 @@
-﻿using ClassifiedAds.Domain.Entities;
+using ClassifiedAds.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -9,7 +9,7 @@ public class RoleConfiguration : IEntityTypeConfiguration<Role>
     public void Configure(EntityTypeBuilder<Role> builder)
     {
         builder.ToTable("Roles");
-        builder.Property(x => x.Id).HasDefaultValueSql("newsequentialid()");
+        builder.Property(x => x.Id).HasDefaultValueSql("gen_random_uuid()");
 
         builder.HasMany(x => x.Claims)
             .WithOne(x => x.Role)

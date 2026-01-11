@@ -1,4 +1,4 @@
-﻿using ClassifiedAds.Domain.Entities;
+using ClassifiedAds.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -9,7 +9,7 @@ public class OutboxMessageConfiguration : IEntityTypeConfiguration<OutboxMessage
     public void Configure(EntityTypeBuilder<OutboxMessage> builder)
     {
         builder.ToTable("OutboxMessages");
-        builder.Property(x => x.Id).HasDefaultValueSql("newsequentialid()");
+        builder.Property(x => x.Id).HasDefaultValueSql("gen_random_uuid()");
         builder.HasIndex(x => new { x.Published, x.CreatedDateTime });
         builder.HasIndex(x => x.CreatedDateTime);
     }

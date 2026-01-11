@@ -16,9 +16,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.Data.SqlTypes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Pgvector;
+using Pgvector.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -76,10 +77,10 @@ public class ProductsController : ControllerBase
     public async Task<ActionResult<IEnumerable<ProductModel>>> VectorSearch(string searchText)
     {
         var embeddingRs = await _embeddingService.GenerateAsync(searchText);
-        var embedding = new SqlVector<float>(embeddingRs.Vector);
+        var embedding = new Vector(embeddingRs.Vector);
 
         var products = _productEmbeddingRepository.GetQueryableSet()
-                .OrderBy(x => EF.Functions.VectorDistance("cosine", x.Embedding, embedding))
+                .OrderBy(x => x.Embedding.CosineDistance(embedding))
                 .Take(5)
                 .Select(x => new ProductModel
                 {
@@ -87,7 +88,7 @@ public class ProductsController : ControllerBase
                     Code = x.Product.Code,
                     Name = x.Product.Name,
                     Description = x.Product.Description,
-                    SimilarityScore = EF.Functions.VectorDistance("cosine", x.Embedding, embedding)
+                    SimilarityScore = x.Embedding.CosineDistance(embedding)
                 }).ToList();
 
         return Ok(products);
@@ -126,7 +127,7 @@ public class ProductsController : ControllerBase
 
             var similarProducts = _productEmbeddingRepository.GetQueryableSet()
                 .Where(x => x.ProductId != id)
-                .OrderBy(x => EF.Functions.VectorDistance("cosine", x.Embedding, embedding.Embedding))
+                .OrderBy(x => x.Embedding.CosineDistance(embedding.Embedding))
                 .Take(5)
                 .Select(x => new SimilarProductModel
                 {
@@ -134,7 +135,7 @@ public class ProductsController : ControllerBase
                     Code = x.Product.Code,
                     Name = x.Product.Name,
                     Description = x.Product.Description,
-                    SimilarityScore = EF.Functions.VectorDistance("cosine", x.Embedding, embedding.Embedding)
+                    SimilarityScore = x.Embedding.CosineDistance(embedding.Embedding)
                 }).ToList();
 
             model.SimilarProducts = similarProducts;

@@ -1,9 +1,9 @@
 ﻿using ClassifiedAds.CrossCuttingConcerns.Locks;
 using ClassifiedAds.CrossCuttingConcerns.DateTimes;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
+using NpgsqlTypes;
 using System;
-using System.Data;
 
 namespace ClassifiedAds.Persistence.Locks;
 
@@ -21,19 +21,13 @@ public class LockManager : ILockManager
     private void CreateLock(string entityName, string entityId)
     {
         string sql = @"
-            merge into 
-                [dbo].[Locks] with (holdlock) t  
-            using 
-                (values (@entityName, @entityId)) s([EntityName], [EntityId]) 
-            on 
-                t.[EntityName] = s.[EntityName] and t.[EntityId] = s.[EntityId] 
-            when not matched then 
-                insert ([EntityName], [EntityId]) values (s.[EntityName], s.[EntityId]);
-            ";
+            INSERT INTO ""Locks"" (""EntityName"", ""EntityId"")
+            VALUES (@entityName, @entityId)
+            ON CONFLICT (""EntityName"", ""EntityId"") DO NOTHING";
 
         _dbContext.Database.ExecuteSqlRaw(sql,
-              new SqlParameter("entityName", entityName),
-              new SqlParameter("entityId", entityId));
+              new NpgsqlParameter("entityName", entityName),
+              new NpgsqlParameter("entityId", entityId));
     }
 
     public bool AcquireLock(string entityName, string entityId, string ownerId, TimeSpan expirationIn)
@@ -49,19 +43,19 @@ public class LockManager : ILockManager
         var expired = now + expirationIn;
 
         string sql = @"
-            Update Locks set OwnerId = @OwnerId, 
-            AcquiredDateTime = @AcquiredDateTime,
-            ExpiredDateTime = @ExpiredDateTime
-            where EntityId = @EntityId 
-            and EntityName = @EntityName 
-            and (OwnerId is NULL or ExpiredDateTime < @AcquiredDateTime)";
+            UPDATE ""Locks"" SET ""OwnerId"" = @OwnerId, 
+            ""AcquiredDateTime"" = @AcquiredDateTime,
+            ""ExpiredDateTime"" = @ExpiredDateTime
+            WHERE ""EntityId"" = @EntityId 
+            AND ""EntityName"" = @EntityName 
+            AND (""OwnerId"" IS NULL OR ""ExpiredDateTime"" < @AcquiredDateTime)";
 
         var rs = _dbContext.Database.ExecuteSqlRaw(sql,
-              new SqlParameter("EntityName", entityName),
-              new SqlParameter("EntityId", entityId),
-              new SqlParameter("OwnerId", ownerId),
-              new SqlParameter("AcquiredDateTime", SqlDbType.DateTimeOffset) { Value = now },
-              new SqlParameter("ExpiredDateTime", SqlDbType.DateTimeOffset) { Value = expired });
+              new NpgsqlParameter("EntityName", entityName),
+              new NpgsqlParameter("EntityId", entityId),
+              new NpgsqlParameter("OwnerId", ownerId),
+              new NpgsqlParameter("AcquiredDateTime", NpgsqlDbType.TimestampTz) { Value = now },
+              new NpgsqlParameter("ExpiredDateTime", NpgsqlDbType.TimestampTz) { Value = expired });
 
         return rs > 0;
     }
@@ -72,16 +66,16 @@ public class LockManager : ILockManager
         var expired = now + expirationIn;
 
         string sql = @"
-            Update Locks set ExpiredDateTime = @ExpiredDateTime
-            where EntityId = @EntityId 
-            and EntityName = @EntityName 
-            and OwnerId = @OwnerId";
+            UPDATE ""Locks"" SET ""ExpiredDateTime"" = @ExpiredDateTime
+            WHERE ""EntityId"" = @EntityId 
+            AND ""EntityName"" = @EntityName 
+            AND ""OwnerId"" = @OwnerId";
 
         var rs = _dbContext.Database.ExecuteSqlRaw(sql,
-              new SqlParameter("EntityName", entityName),
-              new SqlParameter("EntityId", entityId),
-              new SqlParameter("OwnerId", ownerId),
-              new SqlParameter("ExpiredDateTime", SqlDbType.DateTimeOffset) { Value = expired });
+              new NpgsqlParameter("EntityName", entityName),
+              new NpgsqlParameter("EntityId", entityId),
+              new NpgsqlParameter("OwnerId", ownerId),
+              new NpgsqlParameter("ExpiredDateTime", NpgsqlDbType.TimestampTz) { Value = expired });
 
         return rs > 0;
     }
@@ -89,17 +83,17 @@ public class LockManager : ILockManager
     public bool ReleaseLock(string entityName, string entityId, string ownerId)
     {
         string sql = @"
-            Update Locks set OwnerId = NULL, 
-            AcquiredDateTime = NULL,
-            ExpiredDateTime = NULL
-            where EntityId = @EntityId 
-            and EntityName = @EntityName 
-            and OwnerId = @OwnerId";
+            UPDATE ""Locks"" SET ""OwnerId"" = NULL, 
+            ""AcquiredDateTime"" = NULL,
+            ""ExpiredDateTime"" = NULL
+            WHERE ""EntityId"" = @EntityId 
+            AND ""EntityName"" = @EntityName 
+            AND ""OwnerId"" = @OwnerId";
 
         _ = _dbContext.Database.ExecuteSqlRaw(sql,
-              new SqlParameter("EntityName", entityName),
-              new SqlParameter("EntityId", entityId),
-              new SqlParameter("OwnerId", ownerId));
+              new NpgsqlParameter("EntityName", entityName),
+              new NpgsqlParameter("EntityId", entityId),
+              new NpgsqlParameter("OwnerId", ownerId));
 
         return true;
     }
@@ -107,13 +101,13 @@ public class LockManager : ILockManager
     public bool ReleaseLocks(string ownerId)
     {
         string sql = @"
-            Update Locks set OwnerId = NULL, 
-            AcquiredDateTime = NULL,
-            ExpiredDateTime = NULL
-            where OwnerId = @OwnerId";
+            UPDATE ""Locks"" SET ""OwnerId"" = NULL, 
+            ""AcquiredDateTime"" = NULL,
+            ""ExpiredDateTime"" = NULL
+            WHERE ""OwnerId"" = @OwnerId";
 
         _ = _dbContext.Database.ExecuteSqlRaw(sql,
-              new SqlParameter("OwnerId", ownerId));
+              new NpgsqlParameter("OwnerId", ownerId));
 
         return true;
     }
@@ -123,13 +117,13 @@ public class LockManager : ILockManager
         var now = _dateTimeProvider.OffsetNow;
 
         string sql = @"
-            Update Locks set OwnerId = NULL, 
-            AcquiredDateTime = NULL,
-            ExpiredDateTime = NULL
-            where ExpiredDateTime < @now";
+            UPDATE ""Locks"" SET ""OwnerId"" = NULL, 
+            ""AcquiredDateTime"" = NULL,
+            ""ExpiredDateTime"" = NULL
+            WHERE ""ExpiredDateTime"" < @now";
 
         _ = _dbContext.Database.ExecuteSqlRaw(sql,
-              new SqlParameter("now", SqlDbType.DateTimeOffset) { Value = now });
+              new NpgsqlParameter("now", NpgsqlDbType.TimestampTz) { Value = now });
 
         return true;
     }

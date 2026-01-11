@@ -1,4 +1,4 @@
-﻿using ClassifiedAds.Domain.Entities;
+using ClassifiedAds.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -9,7 +9,7 @@ public class EmbeddingCacheEntryConfiguration : IEntityTypeConfiguration<Embeddi
     public void Configure(EntityTypeBuilder<EmbeddingCacheEntry> builder)
     {
         builder.ToTable("EmbeddingCacheEntries");
-        builder.Property(x => x.Id).HasDefaultValueSql("newsequentialid()");
+        builder.Property(x => x.Id).HasDefaultValueSql("gen_random_uuid()");
         builder.Property(x => x.Text).IsRequired();
         builder.HasIndex(x => x.Text).IsUnique();
     }

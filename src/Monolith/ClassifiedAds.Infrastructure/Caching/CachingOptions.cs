@@ -20,7 +20,7 @@ public class DistributedCacheOptions
 
     public RedisOptions Redis { get; set; }
 
-    public SqlServerOptions SqlServer { get; set; }
+    public PostgreSqlOptions PostgreSql { get; set; }
 }
 
 public class RedisOptions
@@ -30,7 +30,7 @@ public class RedisOptions
     public string InstanceName { get; set; }
 }
 
-public class SqlServerOptions
+public class PostgreSqlOptions
 {
     public string ConnectionString { get; set; }
 

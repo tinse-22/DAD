@@ -1,44 +1,54 @@
 ﻿using CryptographyHelper;
 using CryptographyHelper.AsymmetricAlgorithms;
 using CryptographyHelper.Certificates;
-using Dapper;
-using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
+using Npgsql;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace ClassifiedAds.Infrastructure.Configuration;
 
 public class SqlConfigurationProvider : ConfigurationProvider
 {
-    private readonly SqlServerOptions _options;
+    private readonly PostgreSqlConfigurationOptions _options;
 
-    public SqlConfigurationProvider(SqlServerOptions options)
+    public SqlConfigurationProvider(PostgreSqlConfigurationOptions options)
     {
         _options = options;
     }
 
     public override void Load()
     {
-        using (var conn = new SqlConnection(_options.ConnectionString))
+        using var conn = new NpgsqlConnection(_options.ConnectionString);
+        conn.Open();
+        using var cmd = new NpgsqlCommand(_options.SqlQuery, conn);
+        using var reader = cmd.ExecuteReader();
+
+        var data = new List<ConfigurationEntry>();
+        while (reader.Read())
         {
-            conn.Open();
-            var data = conn.Query<ConfigurationEntry>(_options.SqlQuery).ToList();
-
-            var cert = data.Any(x => x.IsSensitive)
-                ? _options.Certificate.FindCertificate()
-                : null;
-
-            foreach (var entry in data)
+            data.Add(new ConfigurationEntry
             {
-                if (entry.IsSensitive)
-                {
-                    var decrypted = entry.Value.FromBase64String().UseRSA(cert).Decrypt();
-                    entry.Value = decrypted.GetString();
-                }
-            }
-
-            Data = data.ToDictionary(c => c.Key, c => c.Value);
+                Key = reader.GetString(reader.GetOrdinal("Key")),
+                Value = reader.GetString(reader.GetOrdinal("Value")),
+                IsSensitive = reader.GetBoolean(reader.GetOrdinal("IsSensitive"))
+            });
         }
+
+        var cert = data.Any(x => x.IsSensitive)
+            ? _options.Certificate.FindCertificate()
+            : null;
+
+        foreach (var entry in data)
+        {
+            if (entry.IsSensitive)
+            {
+                var decrypted = entry.Value.FromBase64String().UseRSA(cert).Decrypt();
+                entry.Value = decrypted.GetString();
+            }
+        }
+
+        Data = data.ToDictionary(c => c.Key, c => c.Value);
     }
 }
 
@@ -51,7 +61,7 @@ public class ConfigurationEntry
     public bool IsSensitive { get; set; }
 }
 
-public class SqlServerOptions
+public class PostgreSqlConfigurationOptions
 {
     public bool IsEnabled { get; set; }
 
@@ -64,9 +74,9 @@ public class SqlServerOptions
 
 public class SqlConfigurationSource : IConfigurationSource
 {
-    private readonly SqlServerOptions _options;
+    private readonly PostgreSqlConfigurationOptions _options;
 
-    public SqlConfigurationSource(SqlServerOptions options)
+    public SqlConfigurationSource(PostgreSqlConfigurationOptions options)
     {
         _options = options;
     }
@@ -79,7 +89,7 @@ public class SqlConfigurationSource : IConfigurationSource
 
 public static class SqlConfigurationExtensions
 {
-    public static IConfigurationBuilder AddSqlServer(this IConfigurationBuilder builder, SqlServerOptions options)
+    public static IConfigurationBuilder AddPostgreSql(this IConfigurationBuilder builder, PostgreSqlConfigurationOptions options)
     {
         return builder.Add(new SqlConfigurationSource(options));
     }

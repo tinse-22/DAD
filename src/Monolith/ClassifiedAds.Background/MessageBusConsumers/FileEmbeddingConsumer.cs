@@ -7,10 +7,10 @@ using ClassifiedAds.Domain.Repositories;
 using ClassifiedAds.Infrastructure.AI;
 using CryptographyHelper;
 using CryptographyHelper.SymmetricAlgorithms;
-using Microsoft.Data.SqlTypes;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Pgvector;
 using System;
 using System.IO;
 using System.Linq;
@@ -138,7 +138,7 @@ public sealed class FileEmbeddingConsumer :
                     ChunkLocation = Path.Combine("Chunks", fileEntry.Id.ToString(), $"{chunk.StartIndex}_{chunk.EndIndex}.txt"),
                     ShortText = Left(chunk.Text, 100),
                     FileEntryId = fileEntry.Id,
-                    Embedding = new SqlVector<float>(embedding.Vector),
+                    Embedding = new Vector(embedding.Vector),
                     TokenDetails = JsonSerializer.Serialize(embedding.TokenDetails)
                 };
 
@@ -200,7 +200,7 @@ public sealed class FileEmbeddingConsumer :
                         ChunkLocation = Path.Combine("Chunks", fileEntry.Id.ToString(), $"{chunk.StartIndex}_{chunk.EndIndex}.txt"),
                         ShortText = Left(chunk.Text, 100),
                         FileEntryId = fileEntry.Id,
-                        Embedding = new SqlVector<float>(embedding.Vector),
+                        Embedding = new Vector(embedding.Vector),
                         TokenDetails = JsonSerializer.Serialize(embedding.TokenDetails)
                     };
 
@@ -264,7 +264,7 @@ public sealed class FileEmbeddingConsumer :
                         ChunkLocation = Path.Combine("Chunks", fileEntry.Id.ToString(), $"{chunk.StartIndex}_{chunk.EndIndex}.txt"),
                         ShortText = Left(chunk.Text, 100),
                         FileEntryId = fileEntry.Id,
-                        Embedding = new SqlVector<float>(embedding.Vector),
+                        Embedding = new Vector(embedding.Vector),
                         TokenDetails = JsonSerializer.Serialize(embedding.TokenDetails)
                     };
 

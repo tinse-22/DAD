@@ -1,4 +1,4 @@
-﻿using ClassifiedAds.Domain.Entities;
+using ClassifiedAds.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
@@ -11,7 +11,7 @@ public class ConfigurationEntryConfiguration : IEntityTypeConfiguration<Configur
     public void Configure(EntityTypeBuilder<ConfigurationEntry> builder)
     {
         builder.ToTable("ConfigurationEntries");
-        builder.Property(x => x.Id).HasDefaultValueSql("newsequentialid()");
+        builder.Property(x => x.Id).HasDefaultValueSql("gen_random_uuid()");
 
         // Seed
         builder.HasData(new List<ConfigurationEntry>

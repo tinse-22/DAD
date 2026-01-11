@@ -16,11 +16,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Data.SqlTypes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
+using Pgvector;
+using Pgvector.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -88,11 +89,11 @@ public class FilesController : Controller
     public async Task<ActionResult<IEnumerable<FileEntryVectorSearchResultModel>>> VectorSearch(string searchText)
     {
         var embeddingRs = await _embeddingService.GenerateAsync(searchText);
-        var embedding = new SqlVector<float>(embeddingRs.Vector);
+        var embedding = new Vector(embeddingRs.Vector);
 
         var chunks = _fileEntryEmbeddingRepository.GetQueryableSet()
                 .Where(x => !x.FileEntry.Deleted)
-                .OrderBy(x => EF.Functions.VectorDistance("cosine", x.Embedding, embedding))
+                .OrderBy(x => x.Embedding.CosineDistance(embedding))
                 .Take(5)
                 .Select(x => new
                 {
@@ -100,7 +101,7 @@ public class FilesController : Controller
                     x.ChunkName,
                     x.ChunkLocation,
                     x.ShortText,
-                    SimilarityScore = EF.Functions.VectorDistance("cosine", x.Embedding, embedding)
+                    SimilarityScore = x.Embedding.CosineDistance(embedding)
                 }).ToList();
 
         var results = new List<FileEntryVectorSearchResultModel>();

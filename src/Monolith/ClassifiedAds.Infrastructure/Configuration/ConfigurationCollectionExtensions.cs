@@ -10,9 +10,9 @@ public static class ConfigurationCollectionExtensions
 {
     public static IConfigurationBuilder AddAppConfiguration(this IConfigurationBuilder configurationBuilder, ConfigurationProviders options)
     {
-        if (options?.SqlServer?.IsEnabled ?? false)
+        if (options?.PostgreSql?.IsEnabled ?? false)
         {
-            configurationBuilder.AddSqlServer(options.SqlServer);
+            configurationBuilder.AddPostgreSql(options.PostgreSql);
         }
 
         if (options?.AzureAppConfiguration?.IsEnabled ?? false)

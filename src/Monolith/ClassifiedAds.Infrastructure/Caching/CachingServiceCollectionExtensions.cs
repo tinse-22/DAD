@@ -1,4 +1,5 @@
 ﻿using ClassifiedAds.Infrastructure.Caching;
+using Community.Microsoft.Extensions.Caching.PostgreSql;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -22,19 +23,19 @@ public static class CachingServiceCollectionExtensions
         }
         else if (distributedProvider == "Redis")
         {
-            services.AddDistributedRedisCache(opt =>
+            services.AddStackExchangeRedisCache(opt =>
             {
                 opt.Configuration = options.Distributed.Redis.Configuration;
                 opt.InstanceName = options.Distributed.Redis.InstanceName;
             });
         }
-        else if (distributedProvider == "SqlServer")
+        else if (distributedProvider == "PostgreSql")
         {
-            services.AddDistributedSqlServerCache(opt =>
+            services.AddDistributedPostgreSqlCache(opt =>
             {
-                opt.ConnectionString = options.Distributed.SqlServer.ConnectionString;
-                opt.SchemaName = options.Distributed.SqlServer.SchemaName;
-                opt.TableName = options.Distributed.SqlServer.TableName;
+                opt.ConnectionString = options.Distributed.PostgreSql?.ConnectionString;
+                opt.SchemaName = options.Distributed.PostgreSql?.SchemaName ?? "public";
+                opt.TableName = options.Distributed.PostgreSql?.TableName ?? "DistributedCache";
             });
         }
 

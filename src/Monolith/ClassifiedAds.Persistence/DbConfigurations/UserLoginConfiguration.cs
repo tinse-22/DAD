@@ -1,4 +1,4 @@
-﻿using ClassifiedAds.Domain.Entities;
+using ClassifiedAds.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -9,6 +9,6 @@ public class UserLoginConfiguration : IEntityTypeConfiguration<UserLogin>
     public void Configure(EntityTypeBuilder<UserLogin> builder)
     {
         builder.ToTable("UserLogins");
-        builder.Property(x => x.Id).HasDefaultValueSql("newsequentialid()");
+        builder.Property(x => x.Id).HasDefaultValueSql("gen_random_uuid()");
     }
 }

@@ -1,4 +1,4 @@
-﻿using ClassifiedAds.Domain.Entities;
+using ClassifiedAds.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -9,6 +9,6 @@ public class PasswordHistoryConfiguration : IEntityTypeConfiguration<PasswordHis
     public void Configure(EntityTypeBuilder<PasswordHistory> builder)
     {
         builder.ToTable("PasswordHistories");
-        builder.Property(x => x.Id).HasDefaultValueSql("newsequentialid()");
+        builder.Property(x => x.Id).HasDefaultValueSql("gen_random_uuid()");
     }
 }

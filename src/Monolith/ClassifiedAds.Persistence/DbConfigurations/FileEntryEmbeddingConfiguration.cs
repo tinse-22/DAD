@@ -1,4 +1,4 @@
-﻿using ClassifiedAds.Domain.Entities;
+using ClassifiedAds.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -9,7 +9,7 @@ public class FileEntryEmbeddingConfiguration : IEntityTypeConfiguration<FileEntr
     public void Configure(EntityTypeBuilder<FileEntryEmbedding> builder)
     {
         builder.ToTable("FileEntryEmbeddings");
-        builder.Property(x => x.Id).HasDefaultValueSql("newsequentialid()");
+        builder.Property(x => x.Id).HasDefaultValueSql("gen_random_uuid()");
         builder.Property(b => b.Embedding).HasColumnType("vector(1536)");
     }
 }

@@ -1,6 +1,6 @@
 ﻿namespace ClassifiedAds.Infrastructure.Localization;
 
-public class SqlServerOptions
+public class PostgreSqlLocalizationOptions
 {
     public bool IsEnabled { get; set; }
 

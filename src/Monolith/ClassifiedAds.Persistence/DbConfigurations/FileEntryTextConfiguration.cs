@@ -1,4 +1,4 @@
-﻿using ClassifiedAds.Domain.Entities;
+using ClassifiedAds.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -9,6 +9,6 @@ public class FileEntryTextConfiguration : IEntityTypeConfiguration<FileEntryText
     public void Configure(EntityTypeBuilder<FileEntryText> builder)
     {
         builder.ToTable("FileEntryTexts");
-        builder.Property(x => x.Id).HasDefaultValueSql("newsequentialid()");
+        builder.Property(x => x.Id).HasDefaultValueSql("gen_random_uuid()");
     }
 }

@@ -10,16 +10,16 @@ public static class LocalizationServiceCollectionExtensions
 {
     public static IServiceCollection AddClassifiedAdsLocalization(this IServiceCollection services, LocalizationProviders providers = null)
     {
-        if (providers?.SqlServer?.IsEnabled ?? false)
+        if (providers?.PostgreSql?.IsEnabled ?? false)
         {
-            services.Configure<SqlServerOptions>(op =>
+            services.Configure<PostgreSqlLocalizationOptions>(op =>
             {
-                op.ConnectionString = providers.SqlServer.ConnectionString;
-                op.SqlQuery = providers.SqlServer.SqlQuery;
-                op.CacheMinutes = providers.SqlServer.CacheMinutes;
+                op.ConnectionString = providers.PostgreSql.ConnectionString;
+                op.SqlQuery = providers.PostgreSql.SqlQuery;
+                op.CacheMinutes = providers.PostgreSql.CacheMinutes;
             });
 
-            services.AddSingleton<IStringLocalizerFactory, SqlServerStringLocalizerFactory>();
+            services.AddSingleton<IStringLocalizerFactory, PostgreSqlStringLocalizerFactory>();
             services.AddScoped<IStringLocalizer>(provider => provider.GetRequiredService<IStringLocalizerFactory>().Create(null));
         }
         else

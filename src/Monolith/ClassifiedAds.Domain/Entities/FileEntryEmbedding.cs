@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.SqlTypes;
+﻿using Pgvector;
 using System;
 
 namespace ClassifiedAds.Domain.Entities;
@@ -11,7 +11,7 @@ public class FileEntryEmbedding : Entity<Guid>, IAggregateRoot
 
     public string ShortText { get; set; }
 
-    public SqlVector<float> Embedding { get; set; }
+    public Vector Embedding { get; set; }
 
     public string TokenDetails { get; set; }
 

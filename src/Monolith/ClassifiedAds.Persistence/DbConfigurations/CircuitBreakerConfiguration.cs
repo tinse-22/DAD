@@ -1,4 +1,4 @@
-﻿using ClassifiedAds.Persistence.CircuitBreakers;
+using ClassifiedAds.Persistence.CircuitBreakers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

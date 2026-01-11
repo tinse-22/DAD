@@ -5,11 +5,11 @@ using System.Globalization;
 
 namespace ClassifiedAds.Infrastructure.Localization;
 
-public class SqlServerStringLocalizer : IStringLocalizer
+public class PostgreSqlStringLocalizer : IStringLocalizer
 {
     private readonly Dictionary<string, Dictionary<string, string>> _data;
 
-    public SqlServerStringLocalizer(Dictionary<string, Dictionary<string, string>> data)
+    public PostgreSqlStringLocalizer(Dictionary<string, Dictionary<string, string>> data)
     {
         _data = data;
     }
